@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TheStamp</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Comic+Neue:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Comic Neue',sans-serif;background:#ffd699;min-height:100vh;transition:background 0.4s}
+body.logged-in{
+  background:
+    radial-gradient(circle at 20% 30%,#ff8c42 20%,transparent 20%),
+    radial-gradient(circle at 80% 70%,#1e90ff 20%,transparent 20%),
+    linear-gradient(120deg,#1e90ff,#ff8c42);
+  background-size:220px 220px
+}
+header{background:#1e90ff;padding:1rem 2rem;border-radius:0 0 25px 25px}
+header h1{color:white;font-family:'Fredoka One',cursive;font-size:2.6rem}
+
+/* LOGIN/SIGNUP BOX */
+.login-box{
+  max-width:350px;margin:2rem auto;background:#fff4e6;padding:2rem;border-radius:25px;text-align:center;box-shadow:4px 4px 0 #ff8c42
+}
+.login-box input{width:100%;padding:.7rem;margin:.5rem 0;border-radius:12px;border:2px solid #ff8c42}
+.login-box button{width:100%;padding:.7rem;margin-top:1rem;background:#ff4fa3;border:none;border-radius:20px;color:white;font-weight:bold;cursor:pointer;transition:background 0.2s}
+.login-box button:active{background:#d95c2a}
+
+/* MAIN CONTAINERS */
+#feed,#friendsPage,#profilePage,#newPostBox,#friendProfilePage{max-width:650px;margin:2rem auto 6rem;display:none;flex-direction:column;gap:1.5rem}
+
+/* POST CARD */
+.post{border:3px solid #ff4fa3;border-radius:18px;padding:1rem;box-shadow:4px 4px 0 #ff4fa3;background:linear-gradient(to top,#b3d9ff 40%,#fff);position:relative;min-height:120px;word-wrap:break-word;font-size:1.2rem;line-height:1.5;display:flex;flex-direction:column;justify-content:space-between}
+.username{font-weight:900;color:#800080}
+.status{font-weight:600;margin:.4rem 0;overflow:auto;max-height:6.6rem} /* keeps posts same-ish height and scrolls if long */
+.feeling-emoji-bar{background:#1e3a8a;color:white;display:flex;justify-content:flex-start;padding:.4rem .8rem;border-radius:10px;position:relative;min-height:36px;align-items:center}
+.feeling-emoji-bar .mood{padding-left:46px;font-weight:700} /* leave room for emoji on left */
+.emoji{position:absolute;bottom:6px;left:10px;font-size:1.5rem}
+.deleteBtn{position:absolute;top:6px;right:6px;background:red;color:white;border:none;border-radius:6px;padding:.2rem .5rem;cursor:pointer}
+
+/* WRITE POST BOX */
+#newPostBox{background:#fff9d6;border-radius:25px;padding:1.5rem;border:4px solid #ff4fa3;box-shadow:5px 5px 0 #ff4fa3}
+#newPostBox textarea,#newPostBox input{width:100%;padding:.7rem;border-radius:12px;border:2px solid #ff8c42;margin-bottom:.6rem}
+#postBtn{width:100%;padding:1rem;border:none;border-radius:999px;background:linear-gradient(135deg,#ff4fa3,#1e90ff);color:white;font-weight:bold;font-size:1.1rem;cursor:pointer;transition:filter 0.12s}
+
+/* PROFILE BOX */
+.profile-card{background:#fff4e6;border-radius:25px;padding:1.5rem;border:4px solid #1e90ff;box-shadow:5px 5px 0 #1e90ff;display:flex;flex-direction:column;gap:1rem;position:relative}
+.profile-pic{width:100px;height:100px;border-radius:50%;background:#b3d9ff;border:4px solid #ff4fa3;align-self:center;cursor:pointer;background-size:cover;background-position:center}
+#yourBio{width:100%;padding:.6rem;border-radius:12px;border:2px solid #ff8c42}
+#yourCode{position:absolute;top:1rem;right:1rem;font-weight:bold;color:#1e90ff}
+#signOutBtn{position:absolute;top:1rem;left:1rem;padding:.5rem 1rem;border:none;border-radius:15px;background:#ff4fa3;color:white;font-weight:bold;cursor:pointer}
+
+/* FRIEND / LIST */
+.friend-box{background:#fff9d6;border-radius:25px;padding:1.5rem;border:4px solid #ff4fa3;box-shadow:5px 5px 0 #ff4fa3;display:flex;flex-direction:column;gap:1rem}
+.friend-card{display:flex;align-items:center;background:#fff4e6;padding:1rem;border-radius:20px;border:3px solid #ff4fa3;gap:1rem;cursor:pointer;box-shadow:3px 3px 0 #ff4fa3}
+.friend-card img{width:60px;height:60px;border-radius:50%;object-fit:cover}
+.friend-info{display:flex;flex-direction:column}
+.friend-name{color:#ff4fa3;font-weight:900;font-size:1.1rem}
+.friend-bio{color:#0b3d91;font-size:.9rem}
+
+/* NAV */
+#bottomNav{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:white;padding:.6rem 2rem;border-radius:30px;display:none;gap:2rem;box-shadow:3px 3px 0 #ff4fa3}
+#bottomNav button{border:none;background:none;font-weight:bold;color:#1e90ff;font-size:1.1rem}
+
+/* SIDE TOOLS */
+#sideTools{position:fixed;left:10px;top:50%;transform:translateY(-50%);display:none;gap:1rem;flex-direction:column}
+.side-btn{width:52px;height:52px;border-radius:50%;border:none;background:linear-gradient(135deg,#1e90ff,#ff4fa3);color:white;font-size:1.4rem}
+#profileBtn{position:fixed;right:10px;top:50%;transform:translateY(-50%);background:#1e90ff;color:white;border:none;padding:.7rem 1.1rem;border-radius:20px;display:none;font-weight:bold}
+#bgBtn{position:fixed;bottom:20px;right:20px;background:#1e90ff;color:white;border:none;padding:.7rem 1rem;border-radius:20px;font-weight:bold;display:none;z-index:200}
+#bgInput,#profilePicInput{display:none}
+</style>
+</head>
+<body>
+
+<header><h1>TheStamp</h1></header>
+
+<!-- LOGIN/SIGNUP -->
+<div class="login-box" id="login">
+  <input id="username" placeholder="First Last">
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <p id="loginMessage"></p>
+  <button id="signInBtn">Sign In</button>
+  <button id="signUpBtn">Sign Up</button>
+</div>
+
+<!-- MAIN FEED -->
+<div id="feed"></div>
+
+<!-- CREATE POST -->
+<div id="newPostBox">
+  <textarea id="statusContent" placeholder="What are you doing?"></textarea>
+  <div class="feeling-row">
+    <input id="moodContent" placeholder="Feeling">
+    <input id="emojiContent" placeholder="😊" maxlength="2">
+  </div>
+  <button id="postBtn">POST</button>
+</div>
+
+<!-- FRIENDS PAGE -->
+<div id="friendsPage"></div>
+
+<!-- FRIEND PROFILE PAGE -->
+<div id="friendProfilePage"></div>
+
+<!-- USER PROFILE PAGE -->
+<div id="profilePage">
+  <div class="profile-card">
+    <button id="signOutBtn">Sign Out</button>
+    <div class="profile-pic" id="yourProfilePic"></div>
+    <h2 id="yourName"></h2>
+    <div id="yourCode"></div>
+    <textarea id="yourBio">Your bio here</textarea>
+  </div>
+  <div id="yourPosts"></div>
+</div>
+
+<!-- SIDE TOOLS -->
+<div id="sideTools">
+  <button class="side-btn" id="friendsBtn">👥</button>
+</div>
+
+<!-- PROFILE BUTTON -->
+<button id="profileBtn">Profile</button>
+
+<!-- NAV -->
+<div id="bottomNav">
+  <button id="homeBtn">🏠 Home</button>
+  <button id="createBtn">➕ Create</button>
+</div>
+
+<button id="bgBtn">Background</button>
+<input type="file" id="bgInput" accept="image/*">
+<input type="file" id="profilePicInput" accept="image/*">
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+// Firebase
+const firebaseConfig = {
+  apiKey:"AIzaSyD8kEHd57dxu1oHEBjv15hfiwTV8iuQz9M",
+  authDomain:"thestamp-d8bfd.firebaseapp.com",
+  projectId:"thestamp-d8bfd",
+  storageBucket:"thestamp-d8bfd.appspot.com",
+  messagingSenderId:"628087052084",
+  appId:"1:628087052084:web:d2b97be9a18cc6a8a9f761"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Globals
+let currentUserUID = "";
+let currentUserName = "";
+let postsUnsub = null;
+
+/* ---------- helpers ---------- */
+function logc(...args){ try{ console.log(...args); }catch(e){} }
+function escapeHtml(s){ if(s===null||s===undefined) return ""; return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'", "&#039;"); }
+
+// --- Generate Unique 10-digit Code ---
+async function generateUniqueCode(){
+  const code = Math.floor(1000000000 + Math.random()*9000000000).toString();
+  const snap = await db.collection("users").where("code","==",code).get();
+  if(!snap.empty) return generateUniqueCode();
+  return code;
+}
+
+// --- Add Post ---
+function addPost(container,user,text,mood,emoji,isProfile=false){
+  const post = document.createElement("div");
+  post.className = isProfile? "post profilePost" : "post";
+  post.innerHTML = `
+    <div class="username">${escapeHtml(user)}</div>
+    <div class="status">${escapeHtml(text)}</div>
+    <div class="feeling-emoji-bar">
+      <div class="mood">${escapeHtml(mood)}</div>
+      <div class="emoji">${escapeHtml(emoji)}</div>
+    </div>
+  `;
+  if(isProfile){
+    const delBtn = document.createElement("button");
+    delBtn.innerText = "Delete";
+    delBtn.className = "deleteBtn";
+    delBtn.onclick = async () => {
+      const id = post.dataset.docId;
+      if(!id){ alert("Can't find post id to delete."); return; }
+      try{ await db.collection("posts").doc(id).delete(); post.remove(); }catch(e){ alert("Delete failed: " + e.message); }
+    };
+    post.appendChild(delBtn);
+  }
+  container.prepend(post);
+  return post;
+}
+
+/* ---------- Auth state listener ---------- */
+auth.onAuthStateChanged(async user => {
+  if(user){
+    currentUserUID = user.uid;
+    try{
+      const doc = await db.collection("users").doc(user.uid).get();
+      if(doc.exists){
+        const d = doc.data();
+        currentUserName = d.name || user.displayName || "You";
+        await loginSuccess(currentUserName, user.uid);
+      } else {
+        const name = user.displayName || (document.getElementById("username")?.value.trim()) || "You";
+        const code = await generateUniqueCode();
+        await db.collection("users").doc(user.uid).set({ name, email: user.email || "", profilePic:"", bio:"", code, friends: [], background:"" });
+        currentUserName = name;
+        await loginSuccess(currentUserName, user.uid);
+      }
+    }catch(e){
+      console.warn("Could not fetch user doc in onAuthStateChanged", e);
+      const name = user.displayName || (document.getElementById("username")?.value.trim()) || "You";
+      currentUserName = name;
+      await loginSuccess(currentUserName, user.uid,true);
+      alert("Warning: couldn't load profile from server (offline or network issue).");
+    }
+  } else {
+    currentUserUID = "";
+    currentUserName = "";
+    document.getElementById("login").style.display = "block";
+    document.getElementById("feed").style.display = "none";
+    document.getElementById("bottomNav").style.display = "none";
+    document.getElementById("sideTools").style.display = "none";
+    document.getElementById("bgBtn").style.display = "none";
+    document.getElementById("profileBtn").style.display = "none";
+    if(postsUnsub){ try{ postsUnsub(); }catch(e){} postsUnsub = null; }
+  }
+});
+
+/* ---------- Sign In ----------
+*/
+document.getElementById("signInBtn").onclick = async () => {
+  const emailVal = (document.getElementById("email")||{}).value.trim();
+  const passVal = (document.getElementById("password")||{}).value.trim();
+  const msg = document.getElementById("loginMessage");
+
+  if(!emailVal || !passVal){ msg.style.color="red"; msg.innerText="Please enter email and password."; return; }
+
+  try{
+    msg.style.color="black"; msg.innerText="Signing in…";
+    const cred = await auth.signInWithEmailAndPassword(emailVal, passVal);
+    await loadUserAndEnter(cred.user.uid, cred.user.displayName || "", emailVal);
+    msg.style.color="green"; msg.innerText="Sign in successful!";
+  }catch(err){
+    console.error("Sign in error", err);
+    msg.style.color="red"; msg.innerText="Sign in error: "+(err.message||err);
+  }
+};
+
+/* ---------- Sign Up ----------
+*/
+document.getElementById("signUpBtn").onclick = async () => {
+  const userName = (document.getElementById("username")||{}).value.trim();
+  const emailVal = (document.getElementById("email")||{}).value.trim();
+  const passVal = (document.getElementById("password")||{}).value.trim();
+  const msg = document.getElementById("loginMessage");
+
+  if(!userName || !emailVal || !passVal){ msg.style.color="red"; msg.innerText="Please fill in all fields."; return; }
+  if(passVal.length < 6){ msg.style.color="red"; msg.innerText="Password must be at least 6 characters."; return; }
+
+  try{
+    msg.style.color="black"; msg.innerText="Creating account…";
+    const cred = await auth.createUserWithEmailAndPassword(emailVal, passVal);
+    await cred.user.updateProfile({ displayName: userName });
+    const code = await generateUniqueCode();
+    await db.collection("users").doc(cred.user.uid).set({ name:userName,email:emailVal,profilePic:"",bio:"",code,friends:[],background:"" });
+    await loadUserAndEnter(cred.user.uid, userName, emailVal);
+    msg.style.color="green"; msg.innerText="Account created and signed in!";
+  }catch(err){
+    console.error("Sign up error", err);
+    msg.style.color="red"; msg.innerText="Sign up error: "+(err.message||err);
+  }
+};
+
+/* ---------- Load user and enter ----------
+*/
+async function loadUserAndEnter(uid, preferredName="", email=""){
+  try{
+    const doc = await db.collection("users").doc(uid).get();
+    if(doc.exists){
+      currentUserName = doc.data().name || preferredName;
+    } else {
+      const code = await generateUniqueCode();
+      await db.collection("users").doc(uid).set({ name:preferredName,email:email,profilePic:"",bio:"",code,friends:[],background:"" });
+      currentUserName = preferredName;
+    }
+    await loginSuccess(currentUserName, uid);
+  }catch(e){
+    console.error("loadUserAndEnter failed", e);
+    currentUserName = preferredName;
+    await loginSuccess(currentUserName, uid,true);
+  }
+}
+
+/* ---------- loginSuccess ----------
+*/
+async function loginSuccess(userName, uid, offline=false){
+  currentUserUID=uid;
+  currentUserName=userName;
+  document.body.classList.add("logged-in");
+  document.getElementById("login").style.display="none";
+  document.getElementById("feed").style.display="flex";
+  document.getElementById("bottomNav").style.display="flex";
+  document.getElementById("sideTools").style.display="flex";
+  document.getElementById("bgBtn").style.display="block";
+  document.getElementById("profileBtn").style.display="block";
+
+  try{
+    const doc = await db.collection("users").doc(uid).get();
+    if(doc.exists){
+      const d = doc.data();
+      document.getElementById("yourName").innerText = d.name || userName;
+      document.getElementById("yourCode").innerText = "Friend Code: "+(d.code||"");
+      if(d.profilePic) document.getElementById("yourProfilePic").style.backgroundImage = `url(${d.profilePic})`;
+      if(d.bio) document.getElementById("yourBio").value=d.bio;
+      if(d.background) document.body.style.background = `url(${d.background}) center / cover fixed`;
+    }
+  }catch(e){ console.warn("Could not populate profile:", e); }
+
+  startPostsListener();
+}
+
+/* ---------- Sign Out ----------
+*/
+document.getElementById("signOutBtn").onclick = async ()=>{
+  try{
+    await auth.signOut();
+    document.getElementById("loginMessage").innerText="";
+  }catch(e){ console.warn("Sign out failed", e); }
+};
+
+/* ---------- Posts listener ----------
+   (feed-only: NO delete buttons on feed)
+*/
+async function startPostsListener(){
+  if(postsUnsub){ try{ postsUnsub(); }catch(e){} postsUnsub=null; }
+  if(!currentUserUID) return;
+  let friends=[];
+  try{
+    const ud = await db.collection("users").doc(currentUserUID).get();
+    friends = ud.exists? ud.data().friends||[] : [];
+  }catch(e){ friends=[]; }
+  if(!friends.includes(currentUserUID)) friends.push(currentUserUID);
+
+  // listen to posts and only render posts from friends + yourself
+  postsUnsub = db.collection("posts").orderBy("timestamp","desc").onSnapshot(snapshot=>{
+    const feedEl = document.getElementById("feed"); feedEl.innerHTML="";
+    snapshot.forEach(doc=>{
+      const p = doc.data();
+      // be resilient: allow p.userUID or p.user fallback
+      const postUID = p.userUID || null;
+      const postUserName = p.user || "";
+      // if userUID exists, check membership; otherwise compare username
+      const shouldShow = postUID ? friends.includes(postUID) : friends.includes(currentUserUID) && postUserName === currentUserName;
+      if(shouldShow){
+        // IMPORTANT: pass false so feed posts never get delete button
+        const el = addPost(feedEl, p.user, p.text, p.mood, p.emoji, false);
+        el.dataset.docId = doc.id;
+      }
+    });
+  }, err=>{ console.error("posts onSnapshot error", err); });
+}
+
+/* ---------- Post button ----------
+   create a post, then return to home. live listener will show it.
+*/
+document.getElementById("postBtn").onclick=async ()=>{
+  const btn=document.getElementById("postBtn");
+  btn.disabled=true; btn.style.filter="brightness(0.7)";
+  const status=(document.getElementById("statusContent")||{}).value||"";
+  const mood=(document.getElementById("moodContent")||{}).value||"";
+  const emoji=(document.getElementById("emojiContent")||{}).value||"";
+  if(!status.trim()){ btn.disabled=false; btn.style.filter=""; return; }
+  try{
+    const newPost={user:currentUserName,userUID:currentUserUID,text:status.trim(),mood:mood.trim(),emoji:emoji.trim(),timestamp:Date.now()};
+    await db.collection("posts").add(newPost);
+    // Clear inputs and go to Home. Rely on snapshot to render — prevents duplicates.
+    document.getElementById("statusContent").value="";
+    document.getElementById("moodContent").value="";
+    document.getElementById("emojiContent").value="";
+    document.getElementById("feed").style.display="flex";
+    document.getElementById("newPostBox").style.display="none";
+  }catch(e){ alert("Error posting: "+e.message); }
+  finally{ btn.disabled=false; btn.style.filter=""; }
+};
+
+/* ---------- Navigation ----------
+*/
+document.getElementById("createBtn").onclick=()=>{ document.getElementById("feed").style.display="none"; document.getElementById("newPostBox").style.display="block"; document.getElementById("friendsPage").style.display="none"; document.getElementById("profilePage").style.display="none"; document.getElementById("friendProfilePage").style.display="none"; };
+document.getElementById("homeBtn").onclick=()=>{ document.getElementById("feed").style.display="flex"; document.getElementById("newPostBox").style.display="none"; document.getElementById("friendsPage").style.display="none"; document.getElementById("profilePage").style.display="none"; document.getElementById("friendProfilePage").style.display="none"; };
+document.getElementById("profileBtn").onclick=async()=>{
+  document.getElementById("feed").style.display="none"; document.getElementById("newPostBox").style.display="none"; document.getElementById("friendsPage").style.display="none"; document.getElementById("friendProfilePage").style.display="none"; document.getElementById("profilePage").style.display="flex";
+  document.getElementById("yourPosts").innerHTML="";
+  try{
+    // Try the direct, indexed query first:
+    const snap = await db.collection("posts").where("userUID","==",currentUserUID).orderBy("timestamp","desc").get();
+    if(!snap.empty){
+      snap.forEach(doc=>{
+        const p = doc.data();
+        const el = addPost(document.getElementById("yourPosts"), p.user, p.text, p.mood, p.emoji, true);
+        el.dataset.docId = doc.id;
+      });
+    } else {
+      // if no docs returned, still show empty
+    }
+  }catch(e){
+    // fallback: if query fails (index/network), fetch recent posts and filter client-side
+    console.warn("Primary profile posts query failed, using fallback:", e);
+    try{
+      const allSnap = await db.collection("posts").orderBy("timestamp","desc").limit(200).get(); // limit to avoid huge downloads
+      allSnap.forEach(doc=>{
+        const p = doc.data();
+        if(p.userUID === currentUserUID || p.user === currentUserName){
+          const el = addPost(document.getElementById("yourPosts"), p.user, p.text, p.mood, p.emoji, true);
+          el.dataset.docId = doc.id;
+        }
+      });
+    }catch(e2){
+      console.error("Fallback also failed:", e2);
+      alert("Unable to load your posts right now.");
+    }
+  }
+};
+
+/* ---------- Friends Page ----------
+   shows friend profilePic (if set)
+*/
+document.getElementById("friendsBtn").onclick=async()=>{
+  document.getElementById("feed").style.display="none"; document.getElementById("newPostBox").style.display="none"; document.getElementById("friendsPage").style.display="flex"; document.getElementById("profilePage").style.display="none"; document.getElementById("friendProfilePage").style.display="none";
+  const fp=document.getElementById("friendsPage");
+  fp.innerHTML = `<div class="friend-box"><input id="codeInput" placeholder="Enter friend code"><button id="addFriendBtn">Add Friend</button></div>`;
+  document.getElementById("addFriendBtn").onclick=addFriend;
+  try{
+    const ud = await db.collection("users").doc(currentUserUID).get();
+    const friendsUIDs = ud.exists? ud.data().friends||[] : [];
+    if(friendsUIDs.length){
+      const container = document.createElement("div");
+      container.innerHTML = "<h2>Your Friends</h2>";
+      for(const uid of friendsUIDs){
+        try{
+          const fdoc = await db.collection("users").doc(uid).get();
+          if(!fdoc.exists) continue;
+          const f = fdoc.data();
+          const card = document.createElement("div");
+          card.className = "friend-card";
+          card.innerHTML = `<img src="${f.profilePic || 'https://i.pravatar.cc/60?img=5'}"><div class="friend-info"><div class="friend-name">${escapeHtml(f.name)}</div><div class="friend-bio">${escapeHtml(f.bio||'')}</div></div>`;
+          container.appendChild(card);
+        }catch(e){ console.warn("fetch friend failed", e); }
+      }
+      fp.appendChild(container);
+    }
+  }catch(e){ console.warn(e); }
+};
+
+/* ---------- Add friend ----------
+*/
+async function addFriend(){
+  const input=document.getElementById("codeInput");
+  if(!input) return;
+  const friendCode=input.value.trim();
+  if(friendCode.length!==10){ alert("Enter a valid 10-digit code."); return; }
+  try{
+    const snap=await db.collection("users").where("code","==",friendCode).get();
+    if(snap.empty){ alert("No user found with this code."); return; }
+    const friendUID=snap.docs[0].id;
+    if(friendUID===currentUserUID){ alert("You cannot add yourself."); return; }
+    await db.collection("users").doc(currentUserUID).update({ friends: firebase.firestore.FieldValue.arrayUnion(friendUID) });
+    await db.collection("users").doc(friendUID).update({ friends: firebase.firestore.FieldValue.arrayUnion(currentUserUID) });
+    alert("Friend added successfully!");
+    input.value="";
+    startPostsListener();
+  }catch(e){ alert("Error adding friend: "+e.message); }
+}
+
+/* ---------- Profile Picture & Bio ----------
+   profile pic persists to Firestore
+*/
+document.getElementById("yourProfilePic").onclick=()=>document.getElementById("profilePicInput").click();
+document.getElementById("profilePicInput").onchange=e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    document.getElementById("yourProfilePic").style.backgroundImage=`url(${reader.result})`;
+    if(currentUserUID) db.collection("users").doc(currentUserUID).update({profilePic:reader.result}).catch(e=>console.warn("profilePic save failed",e));
+  };
+  reader.readAsDataURL(file);
+};
+document.getElementById("yourBio").addEventListener("blur",()=>{ const bio=document.getElementById("yourBio").value||""; if(currentUserUID) db.collection("users").doc(currentUserUID).update({bio}).catch(e=>console.warn("bio save failed",e)); });
+
+/* ---------- Background Picker ----------
+   saves background to Firestore so it persists across sessions
+*/
+document.getElementById("bgBtn").onclick=()=>document.getElementById("bgInput").click();
+document.getElementById("bgInput").onchange=e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    document.body.style.background=`url(${reader.result}) center / cover fixed`;
+    if(currentUserUID) db.collection("users").doc(currentUserUID).update({ background: reader.result }).catch(e=>console.warn("background save failed", e));
+  };
+  reader.readAsDataURL(file);
+};
+
+/* ---------- Cleanup ----------
+*/
+window.addEventListener("beforeunload",()=>{ if(postsUnsub) try{postsUnsub();}catch(e){} postsUnsub=null; });
+</script>
+</body>
+</html>
